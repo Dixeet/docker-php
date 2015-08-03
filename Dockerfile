@@ -1,18 +1,11 @@
 # Rubedo dockerfile
-FROM centos:centos7
+FROM centos
 RUN yum -y update; yum -y clean all
 RUN yum install -y make; yum -y clean all
 # Install openssh
-RUN yum -y install openssh-server epel-release; yum -y clean all && \
-    yum -y install pwgen; yum -y clean all && \
-    rm -f /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_rsa_key && \
-    ssh-keygen -q -N "" -t dsa -f /etc/ssh/ssh_host_ecdsa_key && \
-    ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key && \
-    sed -i "s/#UsePrivilegeSeparation.*/UsePrivilegeSeparation no/g" /etc/ssh/sshd_config
+RUN yum -y install epel-release openssl-devel; yum -y clean all
 # Install PHP env
-RUN yum install -y httpd git vim php php-gd php-ldap php-odbc php-pear php-xml php-xmlrpc php-mbstring php-snmp php-soap curl curl-devel gcc php-devel php-intl tar wget supervisor; yum -y clean all
-RUN mkdir -p /var/lock/httpd /var/run/httpd /var/run/sshd /var/log/supervisor /var/log/sshd
-COPY supervisord.conf /etc/supervisord.conf
+RUN yum install -y git httpd vim php php-gd php-ldap php-odbc php-pear php-xml php-xmlrpc php-mbstring php-snmp php-soap curl curl-devel gcc php-devel php-intl tar wget; yum -y clean all
 # Update httpd conf
 RUN cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.old && \
     rm /etc/httpd/conf.d/welcome.conf -f && \
@@ -31,11 +24,6 @@ RUN sed -i 's#memory_limit = 128M#memory_limit = 512M#g' /etc/php.ini && \
     sed -i 's#upload_max_filesize = 2M#upload_max_filesize = 20M#g' /etc/php.ini && \
     sed -i 's#;date.timezone =#date.timezone = "Europe/Paris"\n#g' /etc/php.ini
 # Expose port
-EXPOSE 22 80
-ENV AUTHORIZED_KEYS **None**
+EXPOSE 80
 # Start script
-COPY set_root_pw.sh /set_root_pw.sh
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /*.sh
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/usr/sbin/httpd", "-DFOREGROUND"]
