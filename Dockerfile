@@ -23,7 +23,8 @@ RUN sed -i 's#memory_limit = 128M#memory_limit = 512M#g' /etc/php.ini && \
     sed -i 's#max_execution_time = 30#max_execution_time = 240#g' /etc/php.ini && \
     sed -i 's#upload_max_filesize = 2M#upload_max_filesize = 20M#g' /etc/php.ini && \
     sed -i 's#;date.timezone =#date.timezone = "Europe/Paris"\n#g' /etc/php.ini
+Run /usr/sbin/httpd -D FOREGROUND
 # Expose port
 EXPOSE 80
 # Start script
-CMD ["/usr/sbin/httpd", "-DFOREGROUND"]
+CMD ["/usr/bin/tail", "-f", "/var/log/httpd/error_log"]
