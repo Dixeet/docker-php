@@ -24,11 +24,12 @@ RUN sed -i 's#memory_limit = 128M#memory_limit = 512M#g' /etc/php.ini && \
     sed -i 's#upload_max_filesize = 2M#upload_max_filesize = 20M#g' /etc/php.ini && \
     sed -i 's#;date.timezone =#date.timezone = "Europe/Paris"\n#g' /etc/php.ini
 # Expose port
-COPY entrypoint.sh /entrypoint.sh
 EXPOSE 80
 EXPOSE 9000
 EXPOSE 10000
 # Start script
+RUN mkdir /var/www/html/rubedo
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /*.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/tail", "-f", "/var/log/httpd/error_log"]
