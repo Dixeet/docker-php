@@ -26,7 +26,8 @@ EXPOSE 80
 EXPOSE 9000
 # Start script
 RUN echo "alias rubedo='php /var/www/html/rubedo/public/index.php'" >> /root/.bashrc
-RUN echo "alias rbd='cd /var/www/html/rbd'" >> /root/.bashrc
+RUN echo "alias rbd='cd /var/www/html/rubedo'" >> /root/.bashrc
+RUN echo "alias extensions='COMPOSER=composer.extensions.json php composer.phar --no-dev update -o'" >> /root/.bashrc
 RUN mkdir -p /var/www/html/rubedo
 RUN mkdir -p /var/log/httpd
 COPY entrypoint.sh /entrypoint.sh
