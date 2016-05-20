@@ -1,35 +1,35 @@
-# Rubedo dockerfile
-FROM centos
-RUN yum -y update; yum -y clean all
-RUN yum install -y make; yum -y clean all
-# Install openssh
-RUN yum -y install epel-release openssl-devel; yum -y clean all
+#  Rubedo dockerfile
+FROM centos:centos7
+RUN yum -y update
+RUN yum install -y make openssl-devel epel-release
+RUN rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
 # Install PHP env
-RUN yum install -y git httpd vim php php-gd php-ldap php-odbc php-pear php-xml php-xmlrpc php-mbstring php-snmp php-soap curl curl-devel gcc php-devel php-intl tar wget; yum -y clean all
+RUN yum install -y httpd git vim php55w php55w-opcache php55w-fpm php55w-common php55w-gd php55w-ldap php-pear php55w-xml php55w-xmlrpc php55w-mbstring php55w-snmp curl curl-devel gcc php55w-devel php55w-intl tar wget; yum -y clean all
 # Update httpd conf
-RUN cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.old && \
-    rm /etc/httpd/conf.d/welcome.conf -f && \
-    sed -i 's#/var/www/html#/var/www/html/rubedo/public#g' /etc/httpd/conf/httpd.conf && \
-    sed -i 's#Options Indexes FollowSymLinks#Options -Indexes +FollowSymLinks#g' /etc/httpd/conf/httpd.conf && \
-    sed -i 's#AllowOverride None#AllowOverride All#g' /etc/httpd/conf/httpd.conf && \
-    sed -i 's#ServerName www.example.com:80#ServerName www.example.com:80\nServerName localhost:80#g' /etc/httpd/conf/httpd.conf
+RUN mv /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.old
+COPY httpd.conf /etc/httpd/conf/httpd.conf
+# Update PHP conf
+COPY php.conf /etc/httpd/conf.d/php.conf
 # Install PHP Mongo extension
 RUN pecl install mongo
 ADD mongo.ini /etc/php.d/mongo.ini
-RUN pecl install xdebug
-COPY xdebug.ini /etc/php.d/xdebug.ini
 # Upgrade default limits for PHP
-RUN sed -i 's#memory_limit = 128M#memory_limit = 512M#g' /etc/php.ini && \
+RUN sed -i 's#memory_limit = 128M#memory_limit = -1#g' /etc/php.ini && \
     sed -i 's#max_execution_time = 30#max_execution_time = 240#g' /etc/php.ini && \
     sed -i 's#upload_max_filesize = 2M#upload_max_filesize = 20M#g' /etc/php.ini && \
     sed -i 's#;date.timezone =#date.timezone = "Europe/Paris"\n#g' /etc/php.ini
 # Expose port
+RUN pecl install xdebug
+COPY xdebug.ini /etc/php.d/xdebug.ini
+# Expose port
 EXPOSE 80
 EXPOSE 9000
-EXPOSE 10000
 # Start script
-RUN mkdir /var/www/html/rubedo
+RUN echo "alias rubedo='php /var/www/html/rubedo/public/index.php'" >> /root/.bashrc
+RUN echo "alias rbd='cd /var/www/html/rbd'" >> /root/.bashrc
+RUN mkdir -p /var/www/html/rubedo
+RUN mkdir -p /var/log/httpd
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /*.sh
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/usr/bin/tail", "-f", "/var/log/httpd/error_log"]
+CMD ["/usr/bin/tail", "-F", "/var/log/httpd/error_log", "/var/log/php-fpm/www-error.log"]
